@@ -90,3 +90,4 @@ keystore.properties
 *.tar.gz
 baselineProfiles/
 TASKER_PLUGIN_DEVELOPMENT_GUIDE.md
+app/src/main/jniLibs/
