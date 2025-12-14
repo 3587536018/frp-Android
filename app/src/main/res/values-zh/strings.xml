@@ -81,4 +81,17 @@
     <string name="toast_frp_config_null">frp 配置为空</string>
     <string name="toast_config_not_exist">配置文件不存在</string>
     <string name="toast_frp_running">frp 正在运行</string>
+    <string name="onboarding_title">首次使用引导</string>
+    <string name="onboarding_subtitle">为确保 frp 后台稳定运行，请完成以下设置。</string>
+    <string name="onboarding_notification_title">授予通知权限</string>
+    <string name="onboarding_notification_desc">通知权限用于将后台服务提升为前台服务，避免被系统杀死。\n\n如果觉得该通知打扰了您，可以在系统设置中关闭frp后台服务的通知而不关闭整个应用的通知权限。</string>
+    <string name="onboarding_notification_status_missing">尚未授予通知权限</string>
+    <string name="onboarding_notification_action">去授予通知权限</string>
+    <string name="onboarding_battery_title">关闭电池优化</string>
+    <string name="onboarding_battery_desc">将应用加入电池优化白名单，减少后台被清理的概率。</string>
+    <string name="onboarding_battery_status_missing">电池优化可能限制后台运行</string>
+    <string name="onboarding_battery_action">申请忽略电池优化</string>
+    <string name="onboarding_status_done">已完成</string>
+    <string name="onboarding_continue">完成</string>
+    <string name="settings_reopen_onboarding">重新打开首次使用引导</string>
 </resources>

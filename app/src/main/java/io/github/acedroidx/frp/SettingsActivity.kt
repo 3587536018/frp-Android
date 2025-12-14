@@ -352,6 +352,14 @@ class SettingsActivity : ComponentActivity() {
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(8.dp)) {
                     SettingItemClickable(
+                        title = stringResource(R.string.settings_reopen_onboarding), onClick = {
+                            startActivity(
+                                Intent(
+                                    this@SettingsActivity, OnboardingActivity::class.java
+                                )
+                            )
+                        })
+                    SettingItemClickable(
                         title = stringResource(R.string.aboutButton), onClick = {
                             startActivity(Intent(this@SettingsActivity, AboutActivity::class.java))
                         })

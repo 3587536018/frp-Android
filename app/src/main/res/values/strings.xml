@@ -82,4 +82,17 @@
     <string name="toast_frp_config_null">frp config is null</string>
     <string name="toast_config_not_exist">Config file does not exist</string>
     <string name="toast_frp_running">frp is already running</string>
+    <string name="onboarding_title">Welcome</string>
+    <string name="onboarding_subtitle">To keep frp stable in the background, please complete these steps.</string>
+    <string name="onboarding_notification_title">Grant notification permission</string>
+    <string name="onboarding_notification_desc">Notification permission is used to promote the background service to a foreground service to avoid being killed by the system.\n\nIf you find the notification bothersome, you can disable the frp background service notification in system settings without turning off the app notification permission.</string>
+    <string name="onboarding_notification_status_missing">Notification permission not granted</string>
+    <string name="onboarding_notification_action">Grant notification permission</string>
+    <string name="onboarding_battery_title">Disable battery optimizations</string>
+    <string name="onboarding_battery_desc">Allow frp to ignore battery optimizations so the service is less likely to be killed.</string>
+    <string name="onboarding_battery_status_missing">Battery optimizations may stop background service</string>
+    <string name="onboarding_battery_action">Request optimization exemption</string>
+    <string name="onboarding_status_done">Done</string>
+    <string name="onboarding_continue">Continue</string>
+    <string name="settings_reopen_onboarding">Reopen welcome onboarding</string>
 </resources>

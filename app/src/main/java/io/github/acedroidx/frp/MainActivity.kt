@@ -1,15 +1,11 @@
 package io.github.acedroidx.frp
 
-import android.Manifest
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
-import android.net.Uri
-import android.provider.Settings
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
@@ -55,7 +51,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -71,14 +66,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import io.github.acedroidx.frp.ui.theme.FrpTheme
 import io.github.acedroidx.frp.ui.theme.ThemeModeKeys
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import androidx.compose.material3.SnackbarResult
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -93,24 +86,11 @@ class MainActivity : ComponentActivity() {
     private val runningConfigList = MutableStateFlow<List<FrpConfig>>(emptyList())
     private val frpVersion = MutableStateFlow("")
     private val themeMode = MutableStateFlow("")
-    private val permissionGranted = MutableStateFlow(true)
 
     private lateinit var preferences: SharedPreferences
 
     private lateinit var mService: ShellService
     private var mBound: Boolean = false
-
-    // 权限请求启动器
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        permissionGranted.value = isGranted
-        if (!isGranted) {
-            Log.w("adx", "Notification permission denied")
-        } else {
-            Log.d("adx", "Notification permission granted")
-        }
-    }
 
     /** Defines callbacks for service binding, passed to bindService()  */
     private val connection = object : ServiceConnection {
@@ -173,6 +153,14 @@ class MainActivity : ComponentActivity() {
 
         preferences = getSharedPreferences("data", MODE_PRIVATE)
 
+        // 首次启动引导页
+        val isFirstLaunch = !preferences.getBoolean(PreferencesKey.FIRST_LAUNCH_DONE, false)
+        if (isFirstLaunch) {
+            startActivity(Intent(this, OnboardingActivity::class.java))
+            finish()
+            return
+        }
+
         // 应用"最近任务中排除"设置
         val excludeFromRecents = preferences.getBoolean(PreferencesKey.EXCLUDE_FROM_RECENTS, false)
         try {
@@ -197,7 +185,6 @@ class MainActivity : ComponentActivity() {
         checkConfig()
         updateConfigList()
         createBGNotificationChannel()
-        checkAndRequestPermissions()
 
         if (preferences.getBoolean(PreferencesKey.AUTO_START_LAUNCH, false)) {
             maybeAutoStartOnLaunch()
@@ -208,7 +195,6 @@ class MainActivity : ComponentActivity() {
             val currentTheme by themeMode.collectAsStateWithLifecycle(themeMode.collectAsState().value)
             val openDialog = remember { mutableStateOf(false) }
             val snackbarHostState = remember { SnackbarHostState() }
-            val permissionGranted by permissionGranted.collectAsStateWithLifecycle(true)
 
             FrpTheme(themeMode = currentTheme) {
                 val frpVersion by frpVersion.collectAsStateWithLifecycle(frpVersion.collectAsState().value.ifEmpty { loadingText })
@@ -264,32 +250,6 @@ class MainActivity : ComponentActivity() {
                 }
                 if (openDialog.value) {
                     CreateConfigDialog { openDialog.value = false }
-                }
-
-                // 显示权限提示
-                val scope = rememberCoroutineScope()
-                val notificationPermissionMessage =
-                    stringResource(R.string.notification_permission_denied_message)
-                val notificationPermissionAction =
-                    stringResource(R.string.notification_permission_action_settings)
-                LaunchedEffect(permissionGranted) {
-                    if (!permissionGranted && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        scope.launch {
-                            val result = snackbarHostState.showSnackbar(
-                                message = notificationPermissionMessage,
-                                actionLabel = notificationPermissionAction,
-                                withDismissAction = true
-                            )
-                            if (result == SnackbarResult.ActionPerformed) {
-                                // 跳转到应用设置页面
-                                val intent =
-                                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                                        data = Uri.fromParts("package", packageName, null)
-                                    }
-                                startActivity(intent)
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -581,14 +541,6 @@ class MainActivity : ComponentActivity() {
         } catch (e: Exception) {
             Log.e("MainActivity", "Failed to set excludeFromRecents in onResume: ${e.message}")
         }
-
-        // 重新检查权限状态（用户可能从设置页面返回）
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasNotificationPermission = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-            permissionGranted.value = hasNotificationPermission
-        }
     }
 
     override fun onDestroy() {
@@ -669,32 +621,6 @@ class MainActivity : ComponentActivity() {
         intent.action = ShellServiceAction.STOP
         intent.putExtra(IntentExtraKey.FrpConfig, arrayListOf(config))
         startService(intent)
-    }
-
-    /**
-     * 检查并请求必要的运行时权限
-     */
-    private fun checkAndRequestPermissions() {
-        // Android 13 及以上需要通知权限
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val hasNotificationPermission = ContextCompat.checkSelfPermission(
-                this, Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
-
-            permissionGranted.value = hasNotificationPermission
-
-            if (!hasNotificationPermission) {
-                // 检查是否应该显示权限说明
-                if (shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)) {
-                    Log.d("adx", "Should show permission rationale")
-                }
-                // 请求权限
-                notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        } else {
-            // Android 13 以下不需要动态请求通知权限
-            permissionGranted.value = true
-        }
     }
 
     private fun createBGNotificationChannel() {

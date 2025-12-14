@@ -14,4 +14,5 @@ object PreferencesKey {
     const val HIDE_SERVICE_START_TOAST = "hide_service_start_toast"
     const val QUICK_TILE_CONFIG_TYPE = "quick_tile_config_type"
     const val QUICK_TILE_CONFIG_NAME = "quick_tile_config_name"
+    const val FIRST_LAUNCH_DONE = "first_launch_done"
 }
