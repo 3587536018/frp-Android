@@ -8,27 +8,30 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -129,11 +132,20 @@ class SettingsActivity : ComponentActivity() {
         val currentQuickTileConfig by quickTileConfig.collectAsStateWithLifecycle(null)
         val configs by allConfigs.collectAsStateWithLifecycle(emptyList())
 
+        var showAutoStartHelp by remember { mutableStateOf(false) }
+
         val themeOptions = listOf(
             ThemeModeKeys.DARK to stringResource(R.string.theme_mode_dark),
             ThemeModeKeys.LIGHT to stringResource(R.string.theme_mode_light),
             ThemeModeKeys.FOLLOW_SYSTEM to stringResource(R.string.theme_mode_follow_system)
         )
+
+        if (showAutoStartHelp) {
+            HelpDialog(
+                title = stringResource(R.string.auto_start_title),
+                message = stringResource(R.string.auto_start_help_message),
+                onDismiss = { showAutoStartHelp = false })
+        }
 
         Column(
             modifier = Modifier
@@ -232,12 +244,23 @@ class SettingsActivity : ComponentActivity() {
             // frp 自启动设置分类（Card）
             Card(modifier = Modifier.fillMaxWidth()) {
                 Column(modifier = Modifier.padding(8.dp)) {
-                    Text(
-                        text = stringResource(R.string.auto_start_title),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)
-                    )
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.auto_start_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        IconButton(onClick = { showAutoStartHelp = true }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.help_24px),
+                                contentDescription = stringResource(R.string.content_desc_help)
+                            )
+                        }
+                    }
                     HorizontalDivider()
 
                     // 开机自启动（移动到自启动分类中）
@@ -268,8 +291,11 @@ class SettingsActivity : ComponentActivity() {
 
                     // 在收到广播时启动
                     val isAutoStartBroadcast by isStartupBroadcast.collectAsStateWithLifecycle(false)
-                    SettingItemWithSwitch(
+                    SettingItemWithSwitchAndHelp(
                         title = stringResource(R.string.auto_start_broadcast),
+                        helpText = stringResource(
+                            R.string.auto_start_broadcast_help_message, BroadcastAction.START
+                        ),
                         checked = isAutoStartBroadcast,
                         onCheckedChange = { checked ->
                             preferences.edit {
@@ -284,8 +310,14 @@ class SettingsActivity : ComponentActivity() {
                     val isAutoStartBroadcastExtra by isStartupBroadcastExtra.collectAsStateWithLifecycle(
                         false
                     )
-                    SettingItemWithSwitch(
+                    SettingItemWithSwitchAndHelp(
                         title = stringResource(R.string.auto_start_broadcast_extra),
+                        helpText = stringResource(
+                            R.string.auto_start_broadcast_extra_help_message,
+                            BroadcastAction.START,
+                            BroadcastExtraKey.TYPE,
+                            BroadcastExtraKey.NAME
+                        ),
                         checked = isAutoStartBroadcastExtra,
                         onCheckedChange = { checked ->
                             preferences.edit {
@@ -327,6 +359,42 @@ class SettingsActivity : ComponentActivity() {
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurface
             )
+            Switch(
+                checked = checked, onCheckedChange = onCheckedChange
+            )
+        }
+    }
+
+    @Composable
+    fun SettingItemWithSwitchAndHelp(
+        title: String, helpText: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit
+    ) {
+        var showHelp by remember { mutableStateOf(false) }
+
+        if (showHelp) {
+            HelpDialog(title = title, message = helpText, onDismiss = { showHelp = false })
+        }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                IconButton(onClick = { showHelp = true }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.help_24px),
+                        contentDescription = stringResource(R.string.content_desc_help)
+                    )
+                }
+            }
             Switch(
                 checked = checked, onCheckedChange = onCheckedChange
             )
@@ -494,5 +562,18 @@ class SettingsActivity : ComponentActivity() {
                 quickTileConfig.value = null
             }
         }
+    }
+
+    @Composable
+    private fun HelpDialog(title: String, message: String, onDismiss: () -> Unit) {
+        AlertDialog(onDismissRequest = onDismiss, title = { Text(title) }, text = {
+            SelectionContainer {
+                Text(text = message)
+            }
+        }, confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.confirm))
+            }
+        })
     }
 }
