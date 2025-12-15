@@ -226,18 +226,17 @@ class ShellService : LifecycleService() {
                 .show()
             return START_NOT_STICKY
         }
-        val hideServiceStartToast = getSharedPreferences("data", MODE_PRIVATE)
-            .getBoolean(PreferencesKey.HIDE_SERVICE_START_TOAST, false)
+        val hideServiceToast = getSharedPreferences("data", MODE_PRIVATE).getBoolean(
+            PreferencesKey.HIDE_SERVICE_TOAST, false
+        )
         when (intent?.action) {
             ShellServiceAction.START -> {
                 for (config in frpConfig) {
                     startFrp(config)
                 }
-                if (!hideServiceStartToast) {
+                if (!hideServiceToast) {
                     Toast.makeText(
-                        this,
-                        getString(R.string.service_start_toast),
-                        Toast.LENGTH_SHORT
+                        this, getString(R.string.service_start_toast), Toast.LENGTH_SHORT
                     ).show()
                 }
                 startForeground(1, showNotification())
@@ -255,8 +254,11 @@ class ShellService : LifecycleService() {
                         @Suppress("DEPRECATION") stopForeground(true)
                     }
                     stopSelf()
-                    Toast.makeText(this, getString(R.string.service_stop_toast), Toast.LENGTH_SHORT)
-                        .show()
+                    if (!hideServiceToast) {
+                        Toast.makeText(
+                            this, getString(R.string.service_stop_toast), Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         }
@@ -275,10 +277,11 @@ class ShellService : LifecycleService() {
         }
         if (_processThreads.value.contains(config)) {
             Log.w("adx", "frp is already running")
-            // Respect user preference to hide service start related toasts
-            val hideServiceStartToast = getSharedPreferences("data", MODE_PRIVATE)
-                .getBoolean(PreferencesKey.HIDE_SERVICE_START_TOAST, false)
-            if (!hideServiceStartToast) {
+            // Respect user preference to hide service start/stop related toasts
+            val hideServiceToast = getSharedPreferences("data", MODE_PRIVATE).getBoolean(
+                PreferencesKey.HIDE_SERVICE_TOAST, false
+            )
+            if (!hideServiceToast) {
                 Toast.makeText(this, getString(R.string.toast_frp_running), Toast.LENGTH_SHORT)
                     .show()
             }
