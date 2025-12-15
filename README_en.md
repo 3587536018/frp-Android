@@ -48,3 +48,35 @@ Devices with armeabi-v7a and x86_64 architectures still use the linux type frp k
 
 ### Start at Boot and Background Keep-Alive
 The app is designed according to the native Android specification. However, some custom Android systems have stricter background management. Please manually enable the relevant options in the system settings. For example, on ColorOS 16, the connection may be disconnected when the app is sent to the background. After enabling [App Settings -> Power Management -> Fully Allow Background Activity], it will work normally.
+
+### BroadcastReceiver usage example
+Make sure to enable the corresponding "Startup at Broadcast" / "Stop at Broadcast" switches in Settings:
+
+```shell
+# Start all configs with Auto-start enabled
+adb shell am broadcast -a io.github.acedroidx.frp.START io.github.acedroidx.frp
+
+# Stop all configs with Auto-start enabled
+adb shell am broadcast -a io.github.acedroidx.frp.STOP io.github.acedroidx.frp
+
+# Operate on a specific config only (examples with extras)
+adb shell am broadcast -a io.github.acedroidx.frp.START -e TYPE frpc -e NAME example.toml io.github.acedroidx.frp
+adb shell am broadcast -a io.github.acedroidx.frp.STOP  -e TYPE frpc -e NAME example.toml io.github.acedroidx.frp
+```
+
+### ContentProvider config access example
+Before using, turn on the "frp Config I/O" read/write switches in Settings and be aware of the possible disclosure of config passwords.
+
+```shell
+# List all configs (requires "Allow read")
+adb shell content query --uri content://io.github.acedroidx.frp.config
+
+# Read a single config (requires "Allow read")
+adb shell content read --uri content://io.github.acedroidx.frp.config/frpc/example.toml
+
+# Write a single config (requires "Allow write")
+# Overwrite the device config with local example.toml
+adb shell content write --uri content://io.github.acedroidx.frp.config/frpc/example.toml < example.toml
+```
+
+- In-app quick validation: long-press the config edit button on the main list to open the config with a third-party app via ContentProvider (requires read/write switches enabled).

@@ -6,10 +6,12 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
 import android.content.SharedPreferences
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -17,6 +19,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.core.content.edit
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
@@ -360,11 +363,31 @@ class MainActivity : ComponentActivity() {
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 8.dp)
                     )
-                    IconButton(
-                        onClick = { startConfigActivity(config) },
-                        enabled = !isRunning,
-                        modifier = Modifier.size(28.dp)
-                    ) {
+                    Box(
+                        modifier = Modifier
+                            .size(28.dp)
+                            .combinedClickable(
+                                enabled = !isRunning,
+                                onClick = { startConfigActivity(config) },
+                                onLongClick = {
+                                    // 通过 ContentProvider 让外部应用读写配置
+                                    val uri =
+                                        Uri.parse("content://${FrpConfigProvider.AUTHORITY}/${config.type.typeName}/${config.fileName}")
+                                    val viewIntent = Intent(Intent.ACTION_VIEW).apply {
+                                        setDataAndType(uri, "text/plain")
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                        addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                                    }
+                                    try {
+                                        startActivity(viewIntent)
+                                    } catch (e: Exception) {
+                                        Toast.makeText(
+                                            this@MainActivity,
+                                            getString(R.string.toast_no_viewer_for_config),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                })) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_pencil_24dp),
                             contentDescription = stringResource(R.string.content_desc_edit),

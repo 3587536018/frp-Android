@@ -48,3 +48,35 @@ armeabi-v7a 和 x86_64 架构的设备仍然使用 linux 类型的 frp 内核，
 
 ### 开机自启与后台保活
 App 按照原生 Android 规范设计，然而部分国产系统拥有更严格的后台管控，请手动在系统设置内打开相应开关。例如 ColorOS 16 退到后台会断开连接，在【应用设置->耗电管理->完全允许后台行为】之后恢复正常
+
+### BroadcastReceiver 使用示例
+需在设置中打开「在收到广播时启动/关闭」对应开关：
+
+```shell
+# 启动所有已开启自启动的配置
+adb shell am broadcast -a io.github.acedroidx.frp.START io.github.acedroidx.frp
+
+# 停止所有已开启自启动的配置
+adb shell am broadcast -a io.github.acedroidx.frp.STOP io.github.acedroidx.frp
+
+# 仅操作指定配置（带参数示例）
+adb shell am broadcast -a io.github.acedroidx.frp.START -e TYPE frpc -e NAME example.toml io.github.acedroidx.frp
+adb shell am broadcast -a io.github.acedroidx.frp.STOP  -e TYPE frpc -e NAME example.toml io.github.acedroidx.frp
+```
+
+### ContentProvider 配置访问示例
+使用前请在「设置 -> frp 配置读写接口」开启读/写开关，注意可能的配置密码泄露等安全风险。
+
+```shell
+# 列出全部配置（需要开启“允许读取”）
+adb shell content query --uri content://io.github.acedroidx.frp.config
+
+# 读取单个配置（需要开启“允许读取”）
+adb shell content read --uri content://io.github.acedroidx.frp.config/frpc/example.toml
+
+# 写入单个配置（需要开启“允许写入”）
+# 将本地 example.toml 覆盖写入设备上的配置文件
+adb shell content write --uri content://io.github.acedroidx.frp.config/frpc/example.toml < example.toml
+```
+
+- 应用内快速验证：在主页配置列表长按“编辑”按钮，会用第三方应用通过 ContentProvider 打开该配置文件，同样需要先在设置中开启读/写开关。

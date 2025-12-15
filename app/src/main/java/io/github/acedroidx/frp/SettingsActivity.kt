@@ -60,6 +60,8 @@ class SettingsActivity : ComponentActivity() {
     private val allowTasker = MutableStateFlow(true)
     private val excludeFromRecents = MutableStateFlow(false)
     private val hideServiceToast = MutableStateFlow(false)
+    private val allowConfigRead = MutableStateFlow(false)
+    private val allowConfigWrite = MutableStateFlow(false)
     private val quickTileConfig = MutableStateFlow<FrpConfig?>(null)
     private lateinit var preferences: SharedPreferences
 
@@ -95,6 +97,10 @@ class SettingsActivity : ComponentActivity() {
         hideServiceToast.value = preferences.getBoolean(
             PreferencesKey.HIDE_SERVICE_TOAST, false
         )
+
+        // 读取配置读写接口开关，默认关闭
+        allowConfigRead.value = preferences.getBoolean(PreferencesKey.ALLOW_CONFIG_READ, false)
+        allowConfigWrite.value = preferences.getBoolean(PreferencesKey.ALLOW_CONFIG_WRITE, false)
 
         // 加载配置列表
         loadConfigList()
@@ -138,10 +144,13 @@ class SettingsActivity : ComponentActivity() {
         val isTaskerAllowed by allowTasker.collectAsStateWithLifecycle(true)
         val isExcludeFromRecents by excludeFromRecents.collectAsStateWithLifecycle(false)
         val isHideServiceToast by hideServiceToast.collectAsStateWithLifecycle(false)
+        val isConfigReadAllowed by allowConfigRead.collectAsStateWithLifecycle(false)
+        val isConfigWriteAllowed by allowConfigWrite.collectAsStateWithLifecycle(false)
         val currentQuickTileConfig by quickTileConfig.collectAsStateWithLifecycle(null)
         val configs by allConfigs.collectAsStateWithLifecycle(emptyList())
 
         var showAutoStartHelp by remember { mutableStateOf(false) }
+        var showConfigIoHelp by remember { mutableStateOf(false) }
 
         val themeOptions = listOf(
             ThemeModeKeys.DARK to stringResource(R.string.theme_mode_dark),
@@ -154,6 +163,13 @@ class SettingsActivity : ComponentActivity() {
                 title = stringResource(R.string.auto_start_title),
                 message = stringResource(R.string.auto_start_help_message),
                 onDismiss = { showAutoStartHelp = false })
+        }
+
+        if (showConfigIoHelp) {
+            HelpDialog(
+                title = stringResource(R.string.config_io_title),
+                message = stringResource(R.string.config_io_help_message),
+                onDismiss = { showConfigIoHelp = false })
         }
 
         Column(
@@ -364,6 +380,50 @@ class SettingsActivity : ComponentActivity() {
                                 )
                             }
                             isStartupBroadcastExtra.value = checked
+                        })
+                }
+            }
+
+            // frp 配置读写接口
+            Card(modifier = Modifier.fillMaxWidth()) {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = stringResource(R.string.config_io_title),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        IconButton(onClick = { showConfigIoHelp = true }) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.help_24px),
+                                contentDescription = stringResource(R.string.content_desc_help)
+                            )
+                        }
+                    }
+                    HorizontalDivider()
+
+                    SettingItemWithSwitch(
+                        title = stringResource(R.string.config_read_title),
+                        checked = isConfigReadAllowed,
+                        onCheckedChange = { checked ->
+                            preferences.edit {
+                                putBoolean(PreferencesKey.ALLOW_CONFIG_READ, checked)
+                            }
+                            allowConfigRead.value = checked
+                        })
+
+                    SettingItemWithSwitch(
+                        title = stringResource(R.string.config_write_title),
+                        checked = isConfigWriteAllowed,
+                        onCheckedChange = { checked ->
+                            preferences.edit {
+                                putBoolean(PreferencesKey.ALLOW_CONFIG_WRITE, checked)
+                            }
+                            allowConfigWrite.value = checked
                         })
                 }
             }

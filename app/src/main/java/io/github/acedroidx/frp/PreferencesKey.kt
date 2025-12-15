@@ -13,6 +13,8 @@ object PreferencesKey {
     const val ALLOW_TASKER = "allow_tasker"
     const val EXCLUDE_FROM_RECENTS = "exclude_from_recents"
     const val HIDE_SERVICE_TOAST = "hide_service_toast"
+    const val ALLOW_CONFIG_READ = "allow_config_read"
+    const val ALLOW_CONFIG_WRITE = "allow_config_write"
     const val QUICK_TILE_CONFIG_TYPE = "quick_tile_config_type"
     const val QUICK_TILE_CONFIG_NAME = "quick_tile_config_name"
     const val FIRST_LAUNCH_DONE = "first_launch_done"
