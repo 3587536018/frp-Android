@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="frp_for_android_version">frp for Android - %1$s/%2$s</string>
+    <string name="frp_for_android_version">frp</string>
     <string name="loading">加载中…</string>
     <string name="content_desc_back">返回</string>
     <string name="content_desc_settings">设置</string>
     <string name="content_desc_rename_icon">重命名图标</string>
     <string name="content_desc_help">帮助</string>
     <string name="auto_start_switch">自启动开关</string>
-    <string name="auto_start_title">frp 自启动设置</string>
+    <string name="auto_start_title">自启动设置</string>
     <string name="auto_start_boot">开机自启动</string>
     <string name="auto_start_launch">在打开应用时启动</string>
     <string name="auto_start_broadcast">在收到广播时启动</string>
